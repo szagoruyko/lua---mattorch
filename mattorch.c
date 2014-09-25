@@ -219,7 +219,10 @@ static int save_tensor_l(lua_State *L) {
   matPutVariable(file, name, pm);
 
   // done
+  lua_pop(L, 1);
   THDoubleTensor_free(tensorc);
+  THDoubleTensor_free(tensor);
+  mxDestroyArray(pm);
   matClose(file);
   return 0;
 }
