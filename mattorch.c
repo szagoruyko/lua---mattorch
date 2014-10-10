@@ -94,7 +94,7 @@ static int load_l(lua_State *L) {
       memcpy((void *)(THDoubleTensor_data(tensor)),
              (void *)(mxGetPr(pa)), THDoubleTensor_nElement(tensor) * sizeof(double));
       lua_pushstring(L, name);
-      luaT_pushudata(L, tensor, luaT_checktypename2id(L, "torch.DoubleTensor"));
+      luaT_pushudata(L, tensor, luaT_typenameid(L, "torch.DoubleTensor"));
       lua_rawset(L, vars);
 
     } else if (mxGetClassID(pa) == mxSINGLE_CLASS) {
@@ -102,7 +102,7 @@ static int load_l(lua_State *L) {
       memcpy((void *)(THFloatTensor_data(tensor)),
              (void *)(mxGetPr(pa)), THFloatTensor_nElement(tensor) * sizeof(float));
       lua_pushstring(L, name);
-      luaT_pushudata(L, tensor, luaT_checktypename2id(L, "torch.FloatTensor"));
+      luaT_pushudata(L, tensor, luaT_typenameid(L, "torch.FloatTensor"));
       lua_rawset(L, vars);
 
     } else if (mxGetClassID(pa) == mxINT32_CLASS) {
@@ -110,7 +110,7 @@ static int load_l(lua_State *L) {
       memcpy((void *)(THIntTensor_data(tensor)),
              (void *)(mxGetPr(pa)), THIntTensor_nElement(tensor) * sizeof(int));
       lua_pushstring(L, name);
-      luaT_pushudata(L, tensor, luaT_checktypename2id(L, "torch.IntTensor"));
+      luaT_pushudata(L, tensor, luaT_typenameid(L, "torch.IntTensor"));
       lua_rawset(L, vars);
 
     } else if (mxGetClassID(pa) == mxUINT32_CLASS) {
@@ -118,7 +118,7 @@ static int load_l(lua_State *L) {
       memcpy((void *)(THIntTensor_data(tensor)),
              (void *)(mxGetPr(pa)), THIntTensor_nElement(tensor) * sizeof(int));
       lua_pushstring(L, name);
-      luaT_pushudata(L, tensor, luaT_checktypename2id(L, "torch.IntTensor"));
+      luaT_pushudata(L, tensor, luaT_typenameid(L, "torch.IntTensor"));
       lua_rawset(L, vars);
 
     } else if ((mxGetClassID(pa) == mxINT16_CLASS)) {
@@ -126,7 +126,7 @@ static int load_l(lua_State *L) {
       memcpy((void *)(THShortTensor_data(tensor)),
              (void *)(mxGetPr(pa)), THShortTensor_nElement(tensor) * sizeof(short));
       lua_pushstring(L, name);
-      luaT_pushudata(L, tensor, luaT_checktypename2id(L, "torch.ShortTensor"));
+      luaT_pushudata(L, tensor, luaT_typenameid(L, "torch.ShortTensor"));
       lua_rawset(L, vars);
 
     } else if ((mxGetClassID(pa) == mxUINT16_CLASS)) {
@@ -134,7 +134,7 @@ static int load_l(lua_State *L) {
       memcpy((void *)(THShortTensor_data(tensor)),
              (void *)(mxGetPr(pa)), THShortTensor_nElement(tensor) * sizeof(short));
       lua_pushstring(L, name);
-      luaT_pushudata(L, tensor, luaT_checktypename2id(L, "torch.ShortTensor"));
+      luaT_pushudata(L, tensor, luaT_typenameid(L, "torch.ShortTensor"));
       lua_rawset(L, vars);
 
     } else if ((mxGetClassID(pa) == mxINT8_CLASS) || (mxGetClassID(pa) == mxCHAR_CLASS)) {
@@ -142,7 +142,7 @@ static int load_l(lua_State *L) {
       memcpy((void *)(THCharTensor_data(tensor)),
              (void *)(mxGetPr(pa)), THCharTensor_nElement(tensor) * sizeof(char));
       lua_pushstring(L, name);
-      luaT_pushudata(L, tensor, luaT_checktypename2id(L, "torch.CharTensor"));
+      luaT_pushudata(L, tensor, luaT_typenameid(L, "torch.CharTensor"));
       lua_rawset(L, vars);
 
     } else if ((mxGetClassID(pa) == mxUINT8_CLASS)) {
@@ -150,7 +150,7 @@ static int load_l(lua_State *L) {
       memcpy((void *)(THByteTensor_data(tensor)),
              (void *)(mxGetPr(pa)), THByteTensor_nElement(tensor) * sizeof(char));
       lua_pushstring(L, name);
-      luaT_pushudata(L, tensor, luaT_checktypename2id(L, "torch.ByteTensor"));
+      luaT_pushudata(L, tensor, luaT_typenameid(L, "torch.ByteTensor"));
       lua_rawset(L, vars);
 
     } else if ((mxGetClassID(pa) == mxLOGICAL_CLASS)) {
@@ -158,7 +158,7 @@ static int load_l(lua_State *L) {
       memcpy((void *)(THByteTensor_data(tensor)),
              (void *)(mxGetPr(pa)), THByteTensor_nElement(tensor) * sizeof(char));
       lua_pushstring(L, name);
-      luaT_pushudata(L, tensor, luaT_checktypename2id(L, "torch.ByteTensor"));
+      luaT_pushudata(L, tensor, luaT_typenameid(L, "torch.ByteTensor"));
       lua_rawset(L, vars);
 
     } else {
@@ -195,31 +195,64 @@ static int save_tensor_l(lua_State *L) {
   MATFile *file = matOpen(path, "w");
 
   // load tensor
-  THDoubleTensor *tensor = (THDoubleTensor *)luaT_checkudata(L, 2, luaT_checktypename2id(L, "torch.DoubleTensor"));
-  THDoubleTensor *tensorc = THDoubleTensor_newContiguous(tensor);
+  if(luaT_toudata(L, 2, "torch.DoubleTensor"))
+  {
+    THDoubleTensor *tensor = (THDoubleTensor *)luaT_checkudata(L, 2, luaT_typenameid(L, "torch.DoubleTensor"));
+    THDoubleTensor *tensorc = THDoubleTensor_newContiguous(tensor);
 
-  // infer size and stride
-  int k;
-  mwSize size[] = {-1,-1,-1,-1,-1,-1,-1,-1};
-  const long ndims = tensorc->nDimension;
-  for (k=0; k<ndims; k++) {
-    size[k] = tensor->size[ndims-k-1];
+    // infer size and stride
+    int k;
+    mwSize size[] = {-1,-1,-1,-1,-1,-1,-1,-1};
+    const long ndims = tensorc->nDimension;
+    for (k=0; k<ndims; k++) {
+      size[k] = tensor->size[ndims-k-1];
+    }
+
+    // create matlab array
+    mxArray *pm = mxCreateNumericArray(ndims, size, mxDOUBLE_CLASS, mxREAL);
+
+    // copy tensor
+    memcpy((void *)(mxGetPr(pm)), 
+           (void *)(THDoubleTensor_data(tensor)),
+           THDoubleTensor_nElement(tensor) * sizeof(double));
+
+    // save it, in a dummy var named 'x'
+    const char *name = "x";
+    matPutVariable(file, name, pm);
+
+    // done
+    THDoubleTensor_free(tensorc);
+    mxDestroyArray(pm);
   }
+  else if(luaT_toudata(L, 2, "torch.FloatTensor"))
+  {
+    THFloatTensor *tensor = (THFloatTensor *)luaT_checkudata(L, 2, luaT_typenameid(L, "torch.FloatTensor"));
+    THFloatTensor *tensorc = THFloatTensor_newContiguous(tensor);
 
-  // create matlab array
-  mxArray *pm = mxCreateNumericArray(ndims, size, mxDOUBLE_CLASS, mxREAL);
+    // infer size and stride
+    int k;
+    mwSize size[] = {-1,-1,-1,-1,-1,-1,-1,-1};
+    const long ndims = tensorc->nDimension;
+    for (k=0; k<ndims; k++) {
+      size[k] = tensor->size[ndims-k-1];
+    }
 
-  // copy tensor
-  memcpy((void *)(mxGetPr(pm)), 
-         (void *)(THDoubleTensor_data(tensor)),
-         THDoubleTensor_nElement(tensor) * sizeof(double));
+    // create matlab array
+    mxArray *pm = mxCreateNumericArray(ndims, size, mxSINGLE_CLASS, mxREAL);
 
-  // save it, in a dummy var named 'x'
-  const char *name = "x";
-  matPutVariable(file, name, pm);
+    // copy tensor
+    memcpy((void *)(mxGetPr(pm)), 
+           (void *)(THFloatTensor_data(tensor)),
+           THFloatTensor_nElement(tensor) * sizeof(float));
 
-  // done
-  THDoubleTensor_free(tensorc);
+    // save it, in a dummy var named 'x'
+    const char *name = "x";
+    matPutVariable(file, name, pm);
+
+    // done
+    THFloatTensor_free(tensorc);
+    mxDestroyArray(pm);
+  }
   matClose(file);
   return 0;
 }
@@ -236,36 +269,72 @@ static int save_table_l(lua_State *L) {
   // table is in the stack at index 2 (2nd var)
   lua_pushnil(L);  // first key
   while (lua_next(L, 2) != 0) {
-    // uses 'key' (at index -2) and 'value' (at index -1)
-    const char *name = lua_tostring(L,-2);
-    THDoubleTensor *tensor = (THDoubleTensor *)luaT_checkudata(L, -1, luaT_checktypename2id(L, "torch.DoubleTensor"));
-    THDoubleTensor *tensorc = THDoubleTensor_newContiguous(tensor);
+    if(luaT_toudata(L, -1, "torch.DoubleTensor"))
+    {
+      // uses 'key' (at index -2) and 'value' (at index -1)
+      const char *name = lua_tostring(L,-2);
+      THDoubleTensor *tensor = (THDoubleTensor *)luaT_checkudata(L, -1, luaT_typenameid(L, "torch.DoubleTensor"));
+      THDoubleTensor *tensorc = THDoubleTensor_newContiguous(tensor);
 
-    // infer size and stride
-    int k;
-    mwSize size[] = {-1,-1,-1,-1,-1,-1,-1,-1};
-    const long ndims = tensorc->nDimension;
-    for (k=0; k<ndims; k++) {
-      size[k] = tensor->size[ndims-k-1];
+      // infer size and stride
+      int k;
+      mwSize size[] = {-1,-1,-1,-1,-1,-1,-1,-1};
+      const long ndims = tensorc->nDimension;
+      for (k=0; k<ndims; k++) {
+	size[k] = tensor->size[ndims-k-1];
+      }
+
+      // create matlab array
+      mxArray *pm = mxCreateNumericArray(ndims, size, mxDOUBLE_CLASS, mxREAL);
+      pms[counter++] = pm;
+
+      // copy tensor into array
+      memcpy((void *)(mxGetPr(pm)), 
+	     (void *)(THDoubleTensor_data(tensorc)),
+	     THDoubleTensor_nElement(tensor) * sizeof(double));
+
+      // store it
+      matPutVariable(file, name, pm);
+
+      // removes 'value'; keeps 'key' for next iteration
+      lua_pop(L, 1);
+
+      // cleanup
+      THDoubleTensor_free(tensorc);
     }
+    else if(luaT_toudata(L, -1, "torch.FloatTensor"))
+    {
+      // uses 'key' (at index -2) and 'value' (at index -1)
+      const char *name = lua_tostring(L,-2);
+      THFloatTensor *tensor = (THFloatTensor *)luaT_checkudata(L, -1, luaT_typenameid(L, "torch.FloatTensor"));
+      THFloatTensor *tensorc = THFloatTensor_newContiguous(tensor);
 
-    // create matlab array
-    mxArray *pm = mxCreateNumericArray(ndims, size, mxDOUBLE_CLASS, mxREAL);
-    pms[counter++] = pm;
+      // infer size and stride
+      int k;
+      mwSize size[] = {-1,-1,-1,-1,-1,-1,-1,-1};
+      const long ndims = tensorc->nDimension;
+      for (k=0; k<ndims; k++) {
+	size[k] = tensor->size[ndims-k-1];
+      }
 
-    // copy tensor into array
-    memcpy((void *)(mxGetPr(pm)), 
-           (void *)(THDoubleTensor_data(tensorc)),
-           THDoubleTensor_nElement(tensor) * sizeof(double));
+      // create matlab array
+      mxArray *pm = mxCreateNumericArray(ndims, size, mxSINGLE_CLASS, mxREAL);
+      pms[counter++] = pm;
 
-    // store it
-    matPutVariable(file, name, pm);
+      // copy tensor into array
+      memcpy((void *)(mxGetPr(pm)), 
+	     (void *)(THFloatTensor_data(tensorc)),
+	     THFloatTensor_nElement(tensor) * sizeof(float));
 
-    // removes 'value'; keeps 'key' for next iteration
-    lua_pop(L, 1);
+      // store it
+      matPutVariable(file, name, pm);
 
-    // cleanup
-    THDoubleTensor_free(tensorc);
+      // removes 'value'; keeps 'key' for next iteration
+      lua_pop(L, 1);
+
+      // cleanup
+      THFloatTensor_free(tensorc);
+    }
   }
   int i = 0;
   for(i=0; i<counter;i++)
@@ -282,10 +351,10 @@ static int save_table_l(lua_State *L) {
 static int save_tensor_ascii_l(lua_State *L)
 {
   // get file descriptor
-  THFile *file = luaT_checkudata(L, 1, luaT_checktypename2id(L, "torch.File"));
+  THFile *file = luaT_checkudata(L, 1, luaT_typenameid(L, "torch.File"));
 
   // load tensor
-  THDoubleTensor *tensor = (THDoubleTensor *)luaT_checkudata(L, 2, luaT_checktypename2id(L, "torch.DoubleTensor"));
+  THDoubleTensor *tensor = (THDoubleTensor *)luaT_checkudata(L, 2, luaT_typenameid(L, "torch.DoubleTensor"));
   THDoubleTensor *tensorc = THDoubleTensor_newContiguous(tensor);
   double *tensor_data = THDoubleTensor_data(tensorc);
 

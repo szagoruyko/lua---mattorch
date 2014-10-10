@@ -73,9 +73,14 @@ mattorch.save = function(path,vars)
                  if not path or not vars then
                     xlua.error('please provide a path','mattorch.save',help.save)
                  end
-                 if type(vars) == 'userdata' and torch.typename(vars) == 'torch.DoubleTensor' then
+                 if type(vars) == 'userdata' then
+		   if torch.typename(vars) == 'torch.DoubleTensor' then
                     local tensor = torch.Tensor():resizeAs(vars):copy(vars)
                     libmattorch.saveTensor(path,tensor)
+		   elseif torch.typename(vars) == 'torch.FloatTensor' then
+                    local tensor = torch.FloatTensor():resizeAs(vars):copy(vars)
+                    libmattorch.saveTensor(path,tensor)
+		   end
 
                  elseif type(vars) == 'table' then
                     for i,v in ipairs(vars) do
@@ -85,7 +90,9 @@ mattorch.save = function(path,vars)
                        end
                     end
                     for _,v in pairs(vars) do
-                       if type(v) ~= 'userdata' or torch.typename(v) ~= 'torch.DoubleTensor' then 
+                       if type(v) ~= 'userdata' or (
+			 torch.typename(v) ~= 'torch.DoubleTensor' and 
+			 torch.typename(v) ~= 'torch.FloatTensor') then 
                           xlua.error('can only export table of torch.DoubleTensor',
                                      'mattorch.save',help.save)
                        end
